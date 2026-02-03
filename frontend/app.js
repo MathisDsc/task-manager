@@ -18,46 +18,66 @@ async function api(path, options = {}) {
 function taskCard(task) {
   const div = document.createElement("div");
   div.className = "task";
-  div.innerHTML = `
-    <div class="row">
-      <h3>${escapeHtml(task.title)}</h3>
-      <span class="badge">${task.status}</span>
-    </div>
-    <p>${task.description ? task.description : "<em>Pas de description</em>"}</p>
-    <small>id=${task.id} â€¢ crÃ©Ã©=${new Date(task.created_at).toLocaleString()}</small>
-    <div class="actions">
-      <select data-role="status">
-        <option value="TODO" ${task.status === "TODO" ? "selected" : ""}>TODO</option>
-        <option value="DOING" ${task.status === "DOING" ? "selected" : ""}>DOING</option>
-        <option value="DONE" ${task.status === "DONE" ? "selected" : ""}>DONE</option>
-      </select>
-      <button class="secondary" data-role="save">Mettre Ã  jour</button>
-      <button data-role="delete">Supprimer</button>
-    </div>
-  `;
 
-  div.querySelector('[data-role="save"]').addEventListener("click", async () => {
-    const status = div.querySelector('[data-role="status"]').value;
+  const row = document.createElement("div");
+  row.className = "row";
+  const titleEl = document.createElement("h3");
+  titleEl.textContent = task.title;
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = task.status;
+  row.append(titleEl, badge);
+
+  const p = document.createElement("p");
+  if (task.description) {
+    p.textContent = task.description;
+  } else {
+    const em = document.createElement("em");
+    em.textContent = "Pas de description";
+    p.appendChild(em);
+  }
+
+  const small = document.createElement("small");
+  small.textContent = `id=${task.id} • créé=${new Date(task.created_at).toLocaleString()}`;
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  const select = document.createElement("select");
+  select.dataset.role = "status";
+  ["TODO", "DOING", "DONE"].forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    if (task.status === value) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "secondary";
+  saveBtn.dataset.role = "save";
+  saveBtn.textContent = "Mettre à jour";
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.dataset.role = "delete";
+  deleteBtn.textContent = "Supprimer";
+
+  actions.append(select, saveBtn, deleteBtn);
+  div.append(row, p, small, actions);
+
+  saveBtn.addEventListener("click", async () => {
+    const status = select.value;
     await api(`/tasks/${task.id}`, { method: "PUT", body: JSON.stringify({ status }) });
     await refresh();
   });
 
-  div.querySelector('[data-role="delete"]').addEventListener("click", async () => {
-    if (!confirm("Supprimer cette tÃ¢che ?")) return;
+  deleteBtn.addEventListener("click", async () => {
+    if (!confirm("Supprimer cette tâche ?")) return;
     await api(`/tasks/${task.id}`, { method: "DELETE" });
     await refresh();
   });
 
   return div;
-}
-
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 async function refresh() {
@@ -66,13 +86,29 @@ async function refresh() {
   try {
     const tasks = await api("/tasks");
     if (tasks.length === 0) {
-      container.innerHTML = "<p><em>Aucune tÃ¢che pour lâ€™instant.</em></p>";
+      const p = document.createElement("p");
+      const em = document.createElement("em");
+      em.textContent = "Aucune tâche pour l’instant.";
+      p.appendChild(em);
+      container.appendChild(p);
       return;
     }
     tasks.forEach(t => container.appendChild(taskCard(t)));
   } catch (e) {
-    container.innerHTML = `<p style="color:#b00020"><strong>Erreur:</strong> ${escapeHtml(e.message)}</p>
-    <p>VÃ©rifie que lâ€™API tourne sur <code>${API_URL}</code>.</p>`;
+    const p1 = document.createElement("p");
+    p1.style.color = "#b00020";
+    const strong = document.createElement("strong");
+    strong.textContent = "Erreur: ";
+    p1.appendChild(strong);
+    p1.append(e.message);
+
+    const p2 = document.createElement("p");
+    p2.textContent = "Vérifie que l’API tourne sur ";
+    const code = document.createElement("code");
+    code.textContent = API_URL;
+    p2.appendChild(code);
+
+    container.replaceChildren(p1, p2);
   }
 }
 
