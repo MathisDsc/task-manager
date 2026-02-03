@@ -1,9 +1,16 @@
-FROM python:3.12
+FROM python:3.12-slim
 
 WORKDIR /app
 COPY . /app/
 
-RUN pip install -r requirements.txt
+# Keep base image patched and minimal
+RUN apt-get update \ 
+ && apt-get dist-upgrade -y \ 
+ && apt-get autoremove -y \ 
+ && apt-get clean \ 
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
