@@ -5,7 +5,7 @@ COPY . /app/
 
 # Keep base image patched (notably OpenSSL CVEs flagged by Snyk)
 RUN apt-get update \
- && apt-get install --only-upgrade -y openssl libssl3t64 \
+ && apt-get install --only-upgrade -y openssl libssl3 libssl-dev openssl-provider-legacy \
  && apt-get dist-upgrade -y \
  && apt-get autoremove -y \
  && apt-get clean \
