@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+
+# SQLite database
+*.db
+
+# Frontend dev servers
+node_modules/
+
+# Mac/Windows cruft
+.DS_Store
+Thumbs.db
